@@ -1,6 +1,6 @@
 import cv2
 import datetime
-from os import getcwd
+import os
 import tkinter
 from tkinter import filedialog  # It only works like this????
 
@@ -33,7 +33,6 @@ tk = tkinter.Tk()
 tk.withdraw()
 currdir = os.getcwd()
 filepath = filedialog.askdirectory(parent=tk, initialdir = currdir, title = 'Select File Save Location')
-tk.destroy()
 filename = os.path.join(filepath,filename)
 
 # --- VIDEO SETUP
@@ -72,7 +71,7 @@ while True:
 startTime = datetime.datetime.now()
 difference_minutes = 0
 print('Starting Recording...')
-while(cap.isOpened() and (difference_minutes < 1)):
+while(cap.isOpened() and (difference_minutes < timer_minutes)):
     ret, frame = cap.read()
     if ret:
         # write the frame
