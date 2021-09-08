@@ -1,6 +1,7 @@
 import cv2
 import datetime
 import os
+import platform
 import tkinter
 from tkinter import filedialog  # It only works like this????
 
@@ -9,7 +10,10 @@ from tkinter import filedialog  # It only works like this????
 # ----------
 filename = "output.mp4"
 filepath = ""
+os_xt = ".mp4"
+
 framerate = 30.0
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
 timer_hours = 0
 timer_minutes = 10
@@ -23,11 +27,23 @@ ol_org = (50,100) # coordinates from top left
 #------------
 
 
+# ------ OS DETECTION
+plt = platform.system()
+if plt == "Windows":
+    print("\nWINDOWS IS UNSUPPORTED\n")
+elif plt == "Linux":
+    print("\nLinux Detected\n")
+
+elif plt == "Darwin":
+    print("\nMacOS Detected\n")
+    # no need for additional config because defaults reflect macOS
+
+
 # ----- FILE SETUP
 # FILENAME: yy_mm_dd_hh_mm
 actual_start_time = datetime.datetime.now()
 ast = actual_start_time
-filename = "{}_{}_{}_{}_{}.mp4".format(ast.year,ast.month,ast.day,ast.hour,ast.minute)
+filename = "{}_{}_{}_{}_{}.{}".format(ast.year,ast.month,ast.day,ast.hour,ast.minute,os_xt)
 # FILEPATH
 tk = tkinter.Tk()
 tk.withdraw()
@@ -47,7 +63,6 @@ framerate = cap.get(cv2.CAP_PROP_FPS)
 frameTime = int(1000/framerate)
 
 # Define the codec and create VideoWriter object
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = cv2.VideoWriter(filename, fourcc, framerate, (width, height))
 
 
@@ -86,7 +101,8 @@ while(cap.isOpened() and (difference_minutes < timer_minutes)):
 
         # display frame
         cv2.putText(show_frame, str(difference)+" Press 'q' to exit",ol_org,ol_font,ol_font_size,ol_color,ol_line_width)
-        cv2.imshow('RECORDING',frame)
+        # cv2.imshow('RECORDING',frame)
+        print(str(difference)+'\nPress "q" to stop recording')
         if ((cv2.waitKey(1) & 0xFF) == ord('q')): # Hit `q` to exit
             print('User break')
             break
