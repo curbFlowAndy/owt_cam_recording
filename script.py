@@ -81,6 +81,7 @@ while True:
     else:
         break
 
+cv2.destroyAllWindows()
 # then, capture only this part of the video
 # get start time
 startTime = datetime.datetime.now()
