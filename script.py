@@ -33,7 +33,8 @@ if plt == "Windows":
     print("\nWINDOWS IS UNSUPPORTED\n")
 elif plt == "Linux":
     print("\nLinux Detected\n")
-
+    os_xt = ".h264"
+    fourcc = cv2.VideoWriter_fourcc(*'H264')
 elif plt == "Darwin":
     print("\nMacOS Detected\n")
     # no need for additional config because defaults reflect macOS
@@ -81,7 +82,6 @@ while True:
     else:
         break
 
-cv2.destroyAllWindows()
 # then, capture only this part of the video
 # get start time
 startTime = datetime.datetime.now()
