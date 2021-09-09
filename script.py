@@ -10,7 +10,7 @@ from tkinter import filedialog  # It only works like this????
 # ----------
 filename = "output.mp4"
 filepath = ""
-os_xt = ".mp4"
+os_xt = "mp4"
 
 framerate = 30.0
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -41,30 +41,32 @@ elif plt == "Darwin":
 
 
 # ----- FILE SETUP
-# FILENAME: yy_mm_dd_hh_mm
+# FILENAME: yy.mm.dd_hh.mm
 actual_start_time = datetime.datetime.now()
 ast = actual_start_time
-filename = "{}_{}_{}_{}_{}.{}".format(ast.year,ast.month,ast.day,ast.hour,ast.minute,os_xt)
+filename = "{}.{}.{}_{}.{}.{}".format(ast.year,ast.month,ast.day,ast.hour,ast.minute,os_xt)
 # FILEPATH
 tk = tkinter.Tk()
 tk.withdraw()
 currdir = os.getcwd()
-filepath = filedialog.askdirectory(parent=tk, initialdir = currdir, title = 'Select File Save Location')
-filename = os.path.join(filepath,filename)
+filepath = filedialog.asksaveasfilename(parent = tk, defaultextension = '.mp4', initialfile = filename, title = "Choose Save Location")
 
 # --- VIDEO SETUP
 cap = cv2.VideoCapture(0) # Capture video from device default camera [0]
+cap2 = cv2.VideoCapture(1)
+
 
 # Get the width and height of frame
 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
-framerate = cap.get(cv2.CAP_PROP_FPS)
+# framerate = cap.get(cv2.CAP_PROP_FPS)
 
 # figure out how long to display each frame based off of fps
 frameTime = int(1000/framerate)
 
 # Define the codec and create VideoWriter object
-out = cv2.VideoWriter(filename, fourcc, framerate, (width, height))
+out = cv2.VideoWriter(filepath, fourcc, framerate, (width, height))
+
 
 
 
@@ -102,7 +104,7 @@ while(cap.isOpened() and (difference_minutes < timer_minutes)):
 
         # display frame
         cv2.putText(show_frame, str(difference)+" Press 'q' to exit",ol_org,ol_font,ol_font_size,ol_color,ol_line_width)
-        # cv2.imshow('RECORDING',frame)
+        cv2.imshow('RECORDING',frame)
         print(str(difference)+'\nPress "q" to stop recording')
         if ((cv2.waitKey(1) & 0xFF) == ord('q')): # Hit `q` to exit
             print('User break')
