@@ -1,9 +1,11 @@
 import cv2
+import numpy as np
 import datetime
 import os
 import platform
 import tkinter
-from tkinter import filedialog  # It only works like this????
+from tkinter import filedialog
+from math import floor
 
 
 
@@ -52,68 +54,78 @@ currdir = os.getcwd()
 filepath = filedialog.asksaveasfilename(parent = tk, defaultextension = '.mp4', initialfile = filename, title = "Choose Save Location")
 
 # --- VIDEO SETUP
-cap = cv2.VideoCapture(0) # Capture video from device default camera [0]
-cap2 = cv2.VideoCapture(1)
+caps = []   # hold all captures
+outs = []   # for the output streams
+for i in range(0,3):
+    cap = cv2.VideoCapture(i)
+    if cap.isOpened():
+        while True:
+            ret,frame = cap.read()
+            if ret:
+                cv2.putText(frame,"'y' to keep, 'n' to ignore",ol_org,ol_font,ol_font_size,ol_color,ol_line_width)
+                cv2.imshow('Frame',frame)
+                key = (cv2.waitKey(1) & 0xFF)
+                if key == ord('y'):
+                    caps.append(cap)
+
+                    # get frame data
+                    width = int(caps[0].get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
+                    height = int(caps[0].get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
+                    framerate = cap.get(cv2.CAP_PROP_FPS)
+
+                    # fix file name
+                    filepath = filepath.split('.mp4')
+                    filepath = filepath[0]  # everything before the .mp4
+                    filepath = filepath + '_' + str(i) + '.mp4'
+
+                    print('Filepath added:\t'+filepath)
+                    outs.append(cv2.VideoWriter(filepath,fourcc,framerate,(width,height)))
+                    break
+
+                elif key == ord('n'):
+                    break
+            else:
+                break
 
 
-# Get the width and height of frame
-width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
-height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
-# framerate = cap.get(cv2.CAP_PROP_FPS)
-
-# figure out how long to display each frame based off of fps
-frameTime = int(1000/framerate)
-
-# Define the codec and create VideoWriter object
-out = cv2.VideoWriter(filepath, fourcc, framerate, (width, height))
-
-
-
-
-
-# ------ SCRIPT
-# first, give tech a chance to set up the camera
-print('Initializing Setup...')
-while True:
-    ret, frame = cap.read()
-    if ret:
-        cv2.putText(frame, 'Position Camera - Press "s" to start recording',ol_org,ol_font,ol_font_size,ol_color,ol_line_width)
-        cv2.imshow('Place camera in proper position (pls make it straight)',frame)
-        if (cv2.waitKey(1) & 0xFF) == ord('s'): # Hit 's' to start recording
-            break
-    else:
-        break
-
-# then, capture only this part of the video
-# get start time
-startTime = datetime.datetime.now()
+# capture the footage
+#cv2.destroyAllWindows()
+start_time = datetime.datetime.now()
 difference_minutes = 0
 print('Starting Recording...')
-while(cap.isOpened() and (difference_minutes < timer_minutes)):
-    ret, frame = cap.read()
-    if ret:
-        # write the frame
-        out.write(frame)
-        show_frame = frame  # frame to write on -> won't save to final video
-
-        # refresh timer
-        # get current time
-        currentTime = datetime.datetime.now()
-        # get time since start
-        difference = currentTime - startTime
-
-        # display frame
-        cv2.putText(show_frame, str(difference)+" Press 'q' to exit",ol_org,ol_font,ol_font_size,ol_color,ol_line_width)
-        cv2.imshow('RECORDING',frame)
-        print(str(difference)+'\nPress "q" to stop recording')
-        if ((cv2.waitKey(1) & 0xFF) == ord('q')): # Hit `q` to exit
-            print('User break')
-            break
-        difference_minutes = currentTime.minute - startTime.minute
-    else:
+while True:
+    # get current time and increment timer
+    current_time = datetime.datetime.now()
+    time_passed = current_time - start_time
+    time_passed_minutes = floor(time_passed.seconds / 60)
+    if time_passed_minutes >= 10:
+        print('Time limit reached.')
         break
+    time_passed_string = "{}:{}:{}".format(time_passed_minutes,(time_passed.seconds % 60),time_passed.microseconds)
+
+    # write output files for current frame on each stream
+    frames = []
+    for cap in caps:
+        ret,frame = cap.read()
+        if ret:
+            frames.append(frame)
+            outs[caps.index(cap)].write(frame)
+
+    # display frames
+    if len(frames) > 1:
+        frames = np.concatenate((frames[0],frames[1]),axis=0)
+    else:
+        frames = frames[0]
+
+    cv2.putText(frames,"{} Press 'q' to quit".format(time_passed_string),ol_org,ol_font,ol_font_size,ol_color,ol_line_width)
+    cv2.imshow("RECORDING",frames)
+    if (cv2.waitKey(1) & 0xFF) == ord('q'):
+        print('Stream canceled by user.')
+        break
+
 print('Recording finished.')
 # Release everything if job is finished
-out.release()
-cap.release()
+for i in range(0,len(outs)):
+    caps[i].release()
+    outs[i].release()
 cv2.destroyAllWindows()
